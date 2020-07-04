@@ -3,6 +3,10 @@ JSMon - JavaScript Change Monitor for BugBounty
 
 Using this script, you can configure a number of JavaScript files on websites that you want to monitor. Everytime you run this script, these files will be fetched and compared to the previously fetched version. If they have changed, you will be notified via Telegram with a message containing a link to the script, the changed filesizes, and a diff file to inspect the changes easily.
 
+![](telegram.png)
+
+![](diff.png)
+
 ## Installation
 
 To install JSMon:

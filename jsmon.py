@@ -122,6 +122,7 @@ def main():
     print("JSMon - Web File Monitor")
     if TELEGRAM_TOKEN == "CHANGEME" or TELEGRAM_CHAT_ID == "CHANGEME":
         print("Please Set Up your Telegram Token And Chat ID!!!")
+        exit(1)
         
     allendpoints = get_endpoint_list('targets')
     # print(allendpoints)
