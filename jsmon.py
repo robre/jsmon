@@ -5,8 +5,12 @@ import re
 import os
 import hashlib
 import json
+import difflib
+import jsbeautifier
 
-gEndpoints = {} # global Endpoint List
+TELEGRAM_TOKEN = 'CHANGEME'
+TELEGRAM_CHAT_ID = 'CHANGEME'
+
 
 def is_valid_endpoint(endpoint):
     regex = re.compile(
@@ -73,25 +77,54 @@ def get_previous_endpoint_hash(endpoint):
 def get_file_stats(fhash):
     return os.stat("downloads/{}".format(fhash))
 
+def get_diff(old,new):
+    opt = {
+        "indent_with_tabs": 1,
+        "keep_function_indentation": 0,
+           }
+    oldlines = open("downloads/{}".format(old), "r").readlines()
+    newlines = open("downloads/{}".format(new), "r").readlines()
+    oldbeautified = jsbeautifier.beautify("".join(oldlines), opt).splitlines()
+    newbeautified = jsbeautifier.beautify("".join(newlines), opt).splitlines()
+    # print(oldbeautified)
+    # print(newbeautified)
+
+    differ = difflib.HtmlDiff()
+    html = differ.make_file(oldbeautified,newbeautified)
+    #open("test.html", "w").write(html)
+    return html
+
 def notify(endpoint,prev, new):
+    diff = get_diff(prev,new)
     print("[!!!] Endpoint [ {} ] has changed from {} to {}".format(endpoint, prev, new))
-    TELEGRAM_TOKEN = '1216105549:AAHEfqRMGjenWQsFTp5ZXaE3ap-BK8BUBBE'
-    TELEGRAM_CHAT_ID = '115041299'
 
     prevsize = get_file_stats(prev).st_size
     newsize = get_file_stats(new).st_size
-    log_entry = "{} has been updated from {}({}) to {}({})".format(endpoint, prev,prevsize, new,newsize)
+    log_entry = "{} has been updated from <code>{}</code>(<b>{}</b>Bytes) to <code>{}</code>(<b>{}</b>Bytes)".format(endpoint, prev,prevsize, new,newsize)
     payload = {
         'chat_id': TELEGRAM_CHAT_ID,
-        'text': log_entry,
+        'caption': log_entry,
         'parse_mode': 'HTML'
     }
-    return requests.post("https://api.telegram.org/bot{token}/sendMessage".format(token=TELEGRAM_TOKEN),
-                             data=payload).content
+    fpayload = {
+        'document': ('diff.html', diff)
+    }
+
+    sendfile = requests.post("https://api.telegram.org/bot{token}/sendDocument".format(token=TELEGRAM_TOKEN),
+                             files=fpayload, data=payload)
+    #print(sendfile.content)
+    return sendfile
+    #test2 = requests.post("https://api.telegram.org/bot{token}/sendMessage".format(token=TELEGRAM_TOKEN),
+    #                         data=payload).content
+
 
 def main():
+    print("JSMon - Web File Monitor")
+    if TELEGRAM_TOKEN == "CHANGEME" or TELEGRAM_CHAT_ID == "CHANGEME":
+        print("Please Set Up your Telegram Token And Chat ID!!!")
+        
     allendpoints = get_endpoint_list('targets')
-    print(allendpoints)
+    # print(allendpoints)
 
     for ep in allendpoints:
         prev_hash = get_previous_endpoint_hash(ep)
@@ -108,3 +141,4 @@ def main():
 
 
 main()        
+
