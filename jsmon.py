@@ -28,7 +28,8 @@ def get_endpoint_list(endpointdir):
     filenames = []
     for (dp, dirnames, files) in os.walk(endpointdir):
         filenames.extend(files)
-
+    
+    filenames.remove(".gitignore")
     for file in filenames:
         with open("{}/{}".format(endpointdir,file), "r") as f:
             endpoints.extend(f.readlines())
