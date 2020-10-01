@@ -11,5 +11,6 @@ setup(
     author_email='mail@r0b.re',
     license='MIT',
     url='https://github.com/robre/jsmon',
-    install_requires=['requests', 'jsbeautifier'],
+    install_requires=['requests', 'jsbeautifier', 'python-decouple','slack'],
+
 )

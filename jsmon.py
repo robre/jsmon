@@ -8,8 +8,22 @@ import json
 import difflib
 import jsbeautifier
 
-TELEGRAM_TOKEN = 'CHANGEME'
-TELEGRAM_CHAT_ID = 'CHANGEME'
+from decouple import config
+import slack
+
+TELEGRAM_TOKEN = config("JSMON_TELEGRAM_TOKEN", default="CHANGEME")
+TELEGRAM_CHAT_ID = config("JSMON_TELEGRAM_CHAT_ID", default="CHANGEME")
+SLACK_TOKEN = config("JSMON_SLACK_TOKEN", default="CHANGEME")
+SLACK_CHANNEL_ID = config("JSMON_SLACK_CHANNEL_ID", default="CHANGEME")
+NOTIFY_SLACK = config("JSMON_NOTIFY_SLACK", default=False, cast=bool)
+NOTIFY_TELEGRAM = config("JSMON_NOTIFY_TELEGRAM", default=False, cast=bool)
+if NOTIFY_SLACK:
+    from slack import WebClient
+    from slack.errors import SlackApiError
+    if(SLACK_TOKEN == "CHANGEME"):
+        print("ERROR SLACK TOKEN NOT FOUND!")
+        exit(1)
+    client=WebToken(token=SLACK_TOKEN)
 
 
 def is_valid_endpoint(endpoint):
@@ -28,7 +42,7 @@ def get_endpoint_list(endpointdir):
     filenames = []
     for (dp, dirnames, files) in os.walk(endpointdir):
         filenames.extend(files)
-
+    filenames = list(filter(lambda x: x[0]!=".", filenames))
     for file in filenames:
         with open("{}/{}".format(endpointdir,file), "r") as f:
             endpoints.extend(f.readlines())
@@ -94,12 +108,9 @@ def get_diff(old,new):
     #open("test.html", "w").write(html)
     return html
 
-def notify(endpoint,prev, new):
-    diff = get_diff(prev,new)
-    print("[!!!] Endpoint [ {} ] has changed from {} to {}".format(endpoint, prev, new))
 
-    prevsize = get_file_stats(prev).st_size
-    newsize = get_file_stats(new).st_size
+def notify_telegram(endpoint,prev, new, diff, prevsize,newsize):
+    print("[!!!] Endpoint [ {} ] has changed from {} to {}".format(endpoint, prev, new))
     log_entry = "{} has been updated from <code>{}</code>(<b>{}</b>Bytes) to <code>{}</code>(<b>{}</b>Bytes)".format(endpoint, prev,prevsize, new,newsize)
     payload = {
         'chat_id': TELEGRAM_CHAT_ID,
@@ -118,14 +129,47 @@ def notify(endpoint,prev, new):
     #                         data=payload).content
 
 
+def notify_slack(endpoint,prev, new, diff, prevsize,newsize):
+    try:
+        response = client.files_upload(
+            initial_comment = "[JSmon] {} has been updated! Download below diff HTML file to check changes.".format(endpoint),
+            channels = SLACK_CHANNEL_ID,
+            content = diff,
+            channel = SLACK_CHANNEL_ID,
+            filetype = "html",
+            filename = "diff.html",
+            title = "Diff changes"
+            )
+        return response
+    except SlackApiError as e:
+        assert e.response["ok"] is False
+        assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
+        print(f"Got an error: {e.response['error']}")
+
+def notify(endpoint, prev, new):
+    diff = get_diff(prev,new)
+    prevsize = get_file_stats(prev).st_size
+    newsize = get_file_stats(new).st_size
+    if NOTIFY_TELEGRAM:
+        notify_telegram(endpoint, prev, new, diff, prevsize, newsize)
+
+    if NOTIFY_SLACK:
+        notify_slack(endpoint, prev, new, diff, prevsize, newsize)
+
+
 def main():
     print("JSMon - Web File Monitor")
-    if TELEGRAM_TOKEN == "CHANGEME" or TELEGRAM_CHAT_ID == "CHANGEME":
-        print("Please Set Up your Telegram Token And Chat ID!!!")
+
+
+    if not(NOTIFY_SLACK or NOTIFY_TELEGRAM):
+        print("You need to setup Slack or Telegram Notifications of JSMon to work!")
         exit(1)
+    if NOTIFY_TELEGRAM and "CHANGEME" in [TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]:
+        print("Please Set Up your Telegram Token And Chat ID!!!")
+    if NOTIFY_SLACK and "CHANGEME" in [SLACK_TOKEN, SLACK_CHANNEL_ID]:
+        print("Please Set Up your Sllack Token And Channel ID!!!")
         
     allendpoints = get_endpoint_list('targets')
-    # print(allendpoints)
 
     for ep in allendpoints:
         prev_hash = get_previous_endpoint_hash(ep)
