@@ -7,11 +7,14 @@ import hashlib
 import json
 import difflib
 import jsbeautifier
+from slack import WebClient
+from slack.errors import SlackApiError
 
+SLACK_TOKEN = "SLACK_OAUTH2_TOKEN" #e.g: xoxp-5XXX...
 TELEGRAM_TOKEN = 'CHANGEME'
 TELEGRAM_CHAT_ID = 'CHANGEME'
 files_to_skip = ['.gitignore', '.DS_Store']
-
+client = WebClient(token=SLACK_TOKEN)
 
 def is_valid_endpoint(endpoint):
     regex = re.compile(
@@ -29,12 +32,11 @@ def get_endpoint_list(endpointdir):
     filenames = []
     for (dp, dirnames, files) in os.walk(endpointdir):
         filenames.extend(files)
-    
+
     for file in filenames:
         if file not in files_to_skip:
             with open("{}/{}".format(endpointdir,file), "r") as f:
                 endpoints.extend(f.readlines())
-        
 
     # Load all endpoints from a dir into a list
     return list(map(lambda x: x.strip(), endpoints))
@@ -50,7 +52,7 @@ def get_hash(string):
 
 def save_endpoint(endpoint, ephash, eptext):
     # save endpoint content to file
-    # add it to  list of 
+    # add it to  list of
     with open("jsmon.json", "r") as jsm:
         jsmd = json.load(jsm)
         if endpoint in jsmd.keys():
@@ -64,7 +66,7 @@ def save_endpoint(endpoint, ephash, eptext):
     with open("downloads/{}".format(ephash), "w") as epw:
         epw.write(eptext)
 
-     
+
 def get_previous_endpoint_hash(endpoint):
     # get previous endpoint version
     # or None if doesnt exist
@@ -74,7 +76,6 @@ def get_previous_endpoint_hash(endpoint):
             return jsmd[endpoint][-1]
         else:
             return None
-        
 
 def get_file_stats(fhash):
     return os.stat("downloads/{}".format(fhash))
@@ -88,46 +89,32 @@ def get_diff(old,new):
     newlines = open("downloads/{}".format(new), "r").readlines()
     oldbeautified = jsbeautifier.beautify("".join(oldlines), opt).splitlines()
     newbeautified = jsbeautifier.beautify("".join(newlines), opt).splitlines()
-    # print(oldbeautified)
-    # print(newbeautified)
 
     differ = difflib.HtmlDiff()
     html = differ.make_file(oldbeautified,newbeautified)
-    #open("test.html", "w").write(html)
     return html
 
 def notify(endpoint,prev, new):
     diff = get_diff(prev,new)
-    print("[!!!] Endpoint [ {} ] has changed from {} to {}".format(endpoint, prev, new))
-
     prevsize = get_file_stats(prev).st_size
     newsize = get_file_stats(new).st_size
-    log_entry = "{} has been updated from <code>{}</code>(<b>{}</b>Bytes) to <code>{}</code>(<b>{}</b>Bytes)".format(endpoint, prev,prevsize, new,newsize)
-    payload = {
-        'chat_id': TELEGRAM_CHAT_ID,
-        'caption': log_entry,
-        'parse_mode': 'HTML'
-    }
-    fpayload = {
-        'document': ('diff.html', diff)
-    }
-
-    sendfile = requests.post("https://api.telegram.org/bot{token}/sendDocument".format(token=TELEGRAM_TOKEN),
-                             files=fpayload, data=payload)
-    #print(sendfile.content)
-    return sendfile
-    #test2 = requests.post("https://api.telegram.org/bot{token}/sendMessage".format(token=TELEGRAM_TOKEN),
-    #                         data=payload).content
-
+    try:
+        response = client.files_upload(
+            initial_comment = "[JSmon] {} has been updated! Download below diff HTML file to check changes.".format(endpoint),
+            channels = "CF112CRPX",
+            content = diff,
+            channel = "CF112CRPX",
+            filetype = "html",
+            filename = "diff.html",
+            title = "Diff changes"
+            )
+    except SlackApiError as e:
+        assert e.response["ok"] is False
+        assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
+        print(f"Got an error: {e.response['error']}")
 
 def main():
-    print("JSMon - Web File Monitor")
-    if TELEGRAM_TOKEN == "CHANGEME" or TELEGRAM_CHAT_ID == "CHANGEME":
-        print("Please Set Up your Telegram Token And Chat ID!!!")
-        exit(1)
-        
     allendpoints = get_endpoint_list('targets')
-    # print(allendpoints)
 
     for ep in allendpoints:
         prev_hash = get_previous_endpoint_hash(ep)
@@ -140,6 +127,5 @@ def main():
             if prev_hash is not None:
                 notify(ep,prev_hash, ep_hash)
             else:
-                print("New Endpoint enrolled: {}".format(ep))
-main()        
-
+                print("[!] New Endpoint enrolled: {}".format(ep))
+main()
