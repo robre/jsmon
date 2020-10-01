@@ -3,6 +3,10 @@ JSMon - JavaScript Change Monitor for BugBounty
 
 Using this script, you can configure a number of JavaScript files on websites that you want to monitor. Everytime you run this script, these files will be fetched and compared to the previously fetched version. If they have changed, you will be notified via Telegram with a message containing a link to the script, the changed filesizes, and a diff file to inspect the changes easily.
 
+![](telegram.png)
+
+![](diff.png)
+
 ## Installation
 
 To install JSMon:
@@ -40,6 +44,7 @@ You can change ``@daily`` to whatever schedule suits you.
 
 To configure Telegram notifications, you need to add your Telegram API key and chat_id to the code, at the start of `jsmon.py`. You can read how to get these values [here](https://blog.r0b.re/automation/bash/2020/06/30/setup-telegram-notifications-for-your-shell.html).
 
+
 Lastly, you need to get started with some targets that you want to monitor. Lets create an example:
 ```
 echo "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.js" >> targets/cdnjs-example
@@ -50,6 +55,7 @@ All done ! now you can run `python jsmon.py` to download the specified files for
 
 - Keep Track of endpoints - check them in a configurable interval (using cron)
 - when endpoints change - send a notification via Telegram or Slack
+
 
 
 ## Usage
@@ -64,6 +70,8 @@ All done ! now you can run `python jsmon.py` to download the specified files for
 
 - jsmon is designed to keep track of javascript files on websites - but it can be used for any filetype to add endpoints 
 
+
 ## Contributors
 [@r0bre](https://twitter.com/r0bre) - Core
 [@Yassineaboukir](https://twitter.com/Yassineaboukir) - Slack Notifications
+

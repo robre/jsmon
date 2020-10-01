@@ -7,6 +7,7 @@ import hashlib
 import json
 import difflib
 import jsbeautifier
+
 from decouple import config
 import slack
 
@@ -23,6 +24,7 @@ if NOTIFY_SLACK:
         print("ERROR SLACK TOKEN NOT FOUND!")
         exit(1)
     client=WebToken(token=SLACK_TOKEN)
+
 
 def is_valid_endpoint(endpoint):
     regex = re.compile(
@@ -106,6 +108,7 @@ def get_diff(old,new):
     #open("test.html", "w").write(html)
     return html
 
+
 def notify_telegram(endpoint,prev, new, diff, prevsize,newsize):
     print("[!!!] Endpoint [ {} ] has changed from {} to {}".format(endpoint, prev, new))
     log_entry = "{} has been updated from <code>{}</code>(<b>{}</b>Bytes) to <code>{}</code>(<b>{}</b>Bytes)".format(endpoint, prev,prevsize, new,newsize)
@@ -124,6 +127,7 @@ def notify_telegram(endpoint,prev, new, diff, prevsize,newsize):
     return sendfile
     #test2 = requests.post("https://api.telegram.org/bot{token}/sendMessage".format(token=TELEGRAM_TOKEN),
     #                         data=payload).content
+
 
 def notify_slack(endpoint,prev, new, diff, prevsize,newsize):
     try:

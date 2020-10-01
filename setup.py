@@ -12,4 +12,5 @@ setup(
     license='MIT',
     url='https://github.com/robre/jsmon',
     install_requires=['requests', 'jsbeautifier', 'python-decouple','slack'],
+
 )
