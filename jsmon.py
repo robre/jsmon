@@ -22,7 +22,7 @@ if NOTIFY_SLACK:
     if(SLACK_TOKEN == "CHANGEME"):
         print("ERROR SLACK TOKEN NOT FOUND!")
         exit(1)
-    client=WebToken(token=SLACK_TOKEN)
+    client=WebClient(token=SLACK_TOKEN)
 
 
 def is_valid_endpoint(endpoint):
