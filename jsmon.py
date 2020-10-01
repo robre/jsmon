@@ -11,8 +11,6 @@ from slack import WebClient
 from slack.errors import SlackApiError
 
 SLACK_TOKEN = "SLACK_OAUTH2_TOKEN" #e.g: xoxp-5XXX...
-TELEGRAM_TOKEN = 'CHANGEME'
-TELEGRAM_CHAT_ID = 'CHANGEME'
 files_to_skip = ['.gitignore', '.DS_Store']
 client = WebClient(token=SLACK_TOKEN)
 
