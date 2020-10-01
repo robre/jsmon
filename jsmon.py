@@ -10,6 +10,7 @@ import jsbeautifier
 
 TELEGRAM_TOKEN = 'CHANGEME'
 TELEGRAM_CHAT_ID = 'CHANGEME'
+files_to_skip = ['.gitignore', '.DS_Store']
 
 
 def is_valid_endpoint(endpoint):
@@ -29,10 +30,10 @@ def get_endpoint_list(endpointdir):
     for (dp, dirnames, files) in os.walk(endpointdir):
         filenames.extend(files)
     
-    filenames.remove(".gitignore")
     for file in filenames:
-        with open("{}/{}".format(endpointdir,file), "r") as f:
-            endpoints.extend(f.readlines())
+        if file not in files_to_skip:
+            with open("{}/{}".format(endpointdir,file), "r") as f:
+                endpoints.extend(f.readlines())
         
 
     # Load all endpoints from a dir into a list
@@ -140,7 +141,5 @@ def main():
                 notify(ep,prev_hash, ep_hash)
             else:
                 print("New Endpoint enrolled: {}".format(ep))
-
-
 main()        
 
