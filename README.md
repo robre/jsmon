@@ -45,6 +45,8 @@ You can change ``@daily`` to whatever schedule suits you.
 To configure Telegram notifications, you need to add your Telegram API key and chat_id to the code, at the start of `jsmon.py`. You can read how to get these values [here](https://blog.r0b.re/automation/bash/2020/06/30/setup-telegram-notifications-for-your-shell.html).
 
 
+Note, for Slack Support, you need to set up your slack app correctly and use the slack oauth token.
+The App needs to have file upload rights and needs to be in the channel that you want it in..
 Lastly, you need to get started with some targets that you want to monitor. Lets create an example:
 ```
 echo "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.js" >> targets/cdnjs-example
