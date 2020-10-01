@@ -9,7 +9,6 @@ import difflib
 import jsbeautifier
 
 from decouple import config
-import slack
 
 TELEGRAM_TOKEN = config("JSMON_TELEGRAM_TOKEN", default="CHANGEME")
 TELEGRAM_CHAT_ID = config("JSMON_TELEGRAM_CHAT_ID", default="CHANGEME")
