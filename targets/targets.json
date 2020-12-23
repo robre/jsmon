@@ -1,0 +1,18 @@
+[
+    {
+        "slackChannelId": "",
+        "telegramChatId": "",
+        "endpoints": [
+            "https://example.com/main.js"
+        ]
+    },
+    {
+        "slackChannelId": "",
+        "telegramChatId": "",
+        "endpoints": [
+            "https://foo.com/bar.js"
+        ]
+    }
+]
+
+
