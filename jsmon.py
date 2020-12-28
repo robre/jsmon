@@ -11,9 +11,7 @@ import jsbeautifier
 from decouple import config
 
 TELEGRAM_TOKEN = config("JSMON_TELEGRAM_TOKEN", default="CHANGEME")
-TELEGRAM_CHAT_ID = config("JSMON_TELEGRAM_CHAT_ID", default="CHANGEME")
 SLACK_TOKEN = config("JSMON_SLACK_TOKEN", default="CHANGEME")
-SLACK_CHANNEL_ID = config("JSMON_SLACK_CHANNEL_ID", default="CHANGEME")
 NOTIFY_SLACK = config("JSMON_NOTIFY_SLACK", default=False, cast=bool)
 NOTIFY_TELEGRAM = config("JSMON_NOTIFY_TELEGRAM", default=False, cast=bool)
 if NOTIFY_SLACK:
@@ -36,19 +34,28 @@ def is_valid_endpoint(endpoint):
     # check if valid url
     return re.match(regex, endpoint) is not None
 
-def get_endpoint_list(endpointdir):
-    endpoints = []
+def get_target_data(endpointdir):
+    data = []
     filenames = []
     for (dp, dirnames, files) in os.walk(endpointdir):
         filenames.extend(files)
     filenames = list(filter(lambda x: x[0]!=".", filenames))
     for file in filenames:
         with open("{}/{}".format(endpointdir,file), "r") as f:
-            endpoints.extend(f.readlines())
+            data = json.load(f)
+    
+    for item in data:
+        if NOTIFY_SLACK and item['slackChannelId'] == "":
+            print(f"You enabled slack integration, but there's an empty slackChannelId in the JSON")
+            exit(1)
+        if NOTIFY_TELEGRAM and item['telegramChatId'] == "":
+            print(f"You enabled telegram integration, but there's an empty telegramChatId in the JSON")
+            exit(1)
+
         
 
     # Load all endpoints from a dir into a list
-    return list(map(lambda x: x.strip(), endpoints))
+    return data
 
 def get_endpoint(endpoint):
     # get an endpoint, return its content
@@ -108,11 +115,11 @@ def get_diff(old,new):
     return html
 
 
-def notify_telegram(endpoint,prev, new, diff, prevsize,newsize):
+def notify_telegram(endpoint, chatId, prev, new, diff, prevsize,newsize):
     print("[!!!] Endpoint [ {} ] has changed from {} to {}".format(endpoint, prev, new))
     log_entry = "{} has been updated from <code>{}</code>(<b>{}</b>Bytes) to <code>{}</code>(<b>{}</b>Bytes)".format(endpoint, prev,prevsize, new,newsize)
     payload = {
-        'chat_id': TELEGRAM_CHAT_ID,
+        'chat_id': chatId,
         'caption': log_entry,
         'parse_mode': 'HTML'
     }
@@ -128,13 +135,13 @@ def notify_telegram(endpoint,prev, new, diff, prevsize,newsize):
     #                         data=payload).content
 
 
-def notify_slack(endpoint,prev, new, diff, prevsize,newsize):
+def notify_slack(endpoint, slackChannelId, prev, new, diff, prevsize,newsize):
     try:
         response = client.files_upload(
             initial_comment = "[JSmon] {} has been updated! Download below diff HTML file to check changes.".format(endpoint),
-            channels = SLACK_CHANNEL_ID,
+            channels = slackChannelId,
             content = diff,
-            channel = SLACK_CHANNEL_ID,
+            channel = slackChannelId,
             filetype = "html",
             filename = "diff.html",
             title = "Diff changes"
@@ -145,15 +152,15 @@ def notify_slack(endpoint,prev, new, diff, prevsize,newsize):
         assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
         print(f"Got an error: {e.response['error']}")
 
-def notify(endpoint, prev, new):
+def notify(endpoint, slackChannelId, telegramChatId, prev, new):
     diff = get_diff(prev,new)
     prevsize = get_file_stats(prev).st_size
     newsize = get_file_stats(new).st_size
     if NOTIFY_TELEGRAM:
-        notify_telegram(endpoint, prev, new, diff, prevsize, newsize)
+        notify_telegram(endpoint, telegramChatId, prev, new, diff, prevsize, newsize)
 
     if NOTIFY_SLACK:
-        notify_slack(endpoint, prev, new, diff, prevsize, newsize)
+        notify_slack(endpoint, slackChannelId, prev, new, diff, prevsize, newsize)
 
 
 def main():
@@ -163,25 +170,24 @@ def main():
     if not(NOTIFY_SLACK or NOTIFY_TELEGRAM):
         print("You need to setup Slack or Telegram Notifications of JSMon to work!")
         exit(1)
-    if NOTIFY_TELEGRAM and "CHANGEME" in [TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]:
+    if NOTIFY_TELEGRAM and "CHANGEME" in [TELEGRAM_TOKEN]:
         print("Please Set Up your Telegram Token And Chat ID!!!")
-    if NOTIFY_SLACK and "CHANGEME" in [SLACK_TOKEN, SLACK_CHANNEL_ID]:
-        print("Please Set Up your Sllack Token And Channel ID!!!")
         
-    allendpoints = get_endpoint_list('targets')
+    allTargets = get_target_data('targets')
 
-    for ep in allendpoints:
-        prev_hash = get_previous_endpoint_hash(ep)
-        ep_text = get_endpoint(ep)
-        ep_hash = get_hash(ep_text)
-        if ep_hash == prev_hash:
-            continue
-        else:
-            save_endpoint(ep, ep_hash, ep_text)
-            if prev_hash is not None:
-                notify(ep,prev_hash, ep_hash)
+    for target in allTargets:
+        for ep in target['endpoints']:
+            prev_hash = get_previous_endpoint_hash(ep)
+            ep_text = get_endpoint(ep)
+            ep_hash = get_hash(ep_text)
+            if ep_hash == prev_hash:
+                continue
             else:
-                print("New Endpoint enrolled: {}".format(ep))
+                save_endpoint(ep, ep_hash, ep_text)
+                if prev_hash is not None:
+                    notify(ep, target['slackChannelId'], target['telegramChatId'], prev_hash, ep_hash)
+                else:
+                    print("New Endpoint enrolled: {}".format(ep))
 
 
 main()        
