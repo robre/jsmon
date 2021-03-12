@@ -35,7 +35,7 @@ crontab -e
 
 create an entry like this:
 ```
-@daily /path/to/jsmon.sh
+@daily cd /dir/containing/jsmon.sh && /bin/bash /path/to/jsmon.sh
 ```
 Note that you should run the `.sh` file, because otherwise the environment will be messed up.
 
