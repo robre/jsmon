@@ -10,12 +10,14 @@ import jsbeautifier
 
 from decouple import config
 
+SCRIPT_PATH = os.getcwd()
 TELEGRAM_TOKEN = config("JSMON_TELEGRAM_TOKEN", default="CHANGEME")
 TELEGRAM_CHAT_ID = config("JSMON_TELEGRAM_CHAT_ID", default="CHANGEME")
 SLACK_TOKEN = config("JSMON_SLACK_TOKEN", default="CHANGEME")
 SLACK_CHANNEL_ID = config("JSMON_SLACK_CHANNEL_ID", default="CHANGEME")
 NOTIFY_SLACK = config("JSMON_NOTIFY_SLACK", default=False, cast=bool)
 NOTIFY_TELEGRAM = config("JSMON_NOTIFY_TELEGRAM", default=False, cast=bool)
+
 if NOTIFY_SLACK:
     from slack import WebClient
     from slack.errors import SlackApiError
@@ -45,7 +47,7 @@ def get_endpoint_list(endpointdir):
     for file in filenames:
         with open("{}/{}".format(endpointdir,file), "r") as f:
             endpoints.extend(f.readlines())
-        
+
 
     # Load all endpoints from a dir into a list
     return list(map(lambda x: x.strip(), endpoints))
@@ -61,42 +63,41 @@ def get_hash(string):
 
 def save_endpoint(endpoint, ephash, eptext):
     # save endpoint content to file
-    # add it to  list of 
-    with open("jsmon.json", "r") as jsm:
+    # add it to  list of
+    with open("{}/jsmon.json".format(SCRIPT_PATH), "r") as jsm:
         jsmd = json.load(jsm)
         if endpoint in jsmd.keys():
             jsmd[endpoint].append(ephash)
         else:
             jsmd[endpoint] = [ephash]
 
-    with open("jsmon.json", "w") as jsm:
+    with open("{}/jsmon.json".format(SCRIPT_PATH), "w") as jsm:
         json.dump(jsmd,jsm)
 
-    with open("downloads/{}".format(ephash), "w") as epw:
+    with open("{}/downloads/{}".format(SCRIPT_PATH,ephash), "w") as epw:
         epw.write(eptext)
 
-     
 def get_previous_endpoint_hash(endpoint):
     # get previous endpoint version
     # or None if doesnt exist
-    with open("jsmon.json", "r") as jsm:
+    with open("{}/jsmon.json".format(SCRIPT_PATH), "r") as jsm:
         jsmd = json.load(jsm)
         if endpoint in jsmd.keys():
             return jsmd[endpoint][-1]
         else:
             return None
-        
+
 
 def get_file_stats(fhash):
-    return os.stat("downloads/{}".format(fhash))
+    return os.stat("{}/downloads/{}".format(SCRIPT_PATH,fhash))
 
 def get_diff(old,new):
     opt = {
         "indent_with_tabs": 1,
         "keep_function_indentation": 0,
            }
-    oldlines = open("downloads/{}".format(old), "r").readlines()
-    newlines = open("downloads/{}".format(new), "r").readlines()
+    oldlines = open("{}/downloads/{}".format(SCRIPT_PATH, old), "r").readlines()
+    newlines = open("{}/downloads/{}".format(SCRIPT_PATH, new), "r").readlines()
     oldbeautified = jsbeautifier.beautify("".join(oldlines), opt).splitlines()
     newbeautified = jsbeautifier.beautify("".join(newlines), opt).splitlines()
     # print(oldbeautified)
@@ -167,8 +168,8 @@ def main():
         print("Please Set Up your Telegram Token And Chat ID!!!")
     if NOTIFY_SLACK and "CHANGEME" in [SLACK_TOKEN, SLACK_CHANNEL_ID]:
         print("Please Set Up your Sllack Token And Channel ID!!!")
-        
-    allendpoints = get_endpoint_list('targets')
+
+    allendpoints = get_endpoint_list('{}/targets'.format(SCRIPT_PATH))
 
     for ep in allendpoints:
         prev_hash = get_previous_endpoint_hash(ep)
@@ -184,5 +185,4 @@ def main():
                 print("New Endpoint enrolled: {}".format(ep))
 
 
-main()        
-
+main()
