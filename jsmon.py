@@ -7,15 +7,22 @@ import hashlib
 import json
 import difflib
 import jsbeautifier
+import smtplib
 
 from decouple import config
+from email.mime.text import MIMEText
 
 TELEGRAM_TOKEN = config("JSMON_TELEGRAM_TOKEN", default="CHANGEME")
 TELEGRAM_CHAT_ID = config("JSMON_TELEGRAM_CHAT_ID", default="CHANGEME")
 SLACK_TOKEN = config("JSMON_SLACK_TOKEN", default="CHANGEME")
 SLACK_CHANNEL_ID = config("JSMON_SLACK_CHANNEL_ID", default="CHANGEME")
+EMAIL_SENDER = config("JSMON_EMAIL_FROM", default="CHANGEME")
+EMAIL_RECEIVER = config("JSMON_EMAIL_TO", default="CHANGEME")
+EMAIL_PASSWORD =  config("JSMON_EMAIL_PASSWORD", default="CHANGEME")
 NOTIFY_SLACK = config("JSMON_NOTIFY_SLACK", default=False, cast=bool)
 NOTIFY_TELEGRAM = config("JSMON_NOTIFY_TELEGRAM", default=False, cast=bool)
+NOTIFY_EMAIL = config("JSMON_NOTIFY_EMAIL", default=True, cast=bool)
+
 if NOTIFY_SLACK:
     from slack import WebClient
     from slack.errors import SlackApiError
@@ -154,19 +161,24 @@ def notify(endpoint, prev, new):
 
     if NOTIFY_SLACK:
         notify_slack(endpoint, prev, new, diff, prevsize, newsize)
+    if NOTIFY_EMAIL:
+        pass
+        // TODO mpla mpla
 
 
 def main():
     print("JSMon - Web File Monitor")
 
 
-    if not(NOTIFY_SLACK or NOTIFY_TELEGRAM):
-        print("You need to setup Slack or Telegram Notifications of JSMon to work!")
+    if not(NOTIFY_SLACK or NOTIFY_TELEGRAM or NOTIFY_EMAIL):
+        print("You need to setup Slack or Telegram Notifications or set up a GMail account of JSMon to work!")
         exit(1)
     if NOTIFY_TELEGRAM and "CHANGEME" in [TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]:
         print("Please Set Up your Telegram Token And Chat ID!!!")
     if NOTIFY_SLACK and "CHANGEME" in [SLACK_TOKEN, SLACK_CHANNEL_ID]:
         print("Please Set Up your Sllack Token And Channel ID!!!")
+    if NOTIFY_EMAIL and "CHANGEME" in [EMAIL_SENDER, EMAIL_RECEIVER, EMAIL_PASSWORD]:
+        print("Please Set Up your GMail account!!!")
         
     allendpoints = get_endpoint_list('targets')
 
