@@ -152,18 +152,34 @@ def notify_slack(endpoint,prev, new, diff, prevsize,newsize):
         assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
         print(f"Got an error: {e.response['error']}")
 
+def notify_email(endpoint,prev, new, diff, prevsize,newsize):
+    try:
+        subject = "[JSmon] {} has been updated! View message body to check changes.".format(endpoint)
+        body = diff
+        sender = EMAIL_SENDER
+        recipients = [EMAIL_RECEIVER]
+        password = EMAIL_PASSWORD
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = sender
+        msg['To'] = ', '.join(recipients)
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+            smtp_server.login(sender, password)
+            smtp_server.sendmail(sender, recipients, msg.as_string())
+    except: 
+        printf("An exception sending email.")
+
+
 def notify(endpoint, prev, new):
     diff = get_diff(prev,new)
     prevsize = get_file_stats(prev).st_size
     newsize = get_file_stats(new).st_size
     if NOTIFY_TELEGRAM:
         notify_telegram(endpoint, prev, new, diff, prevsize, newsize)
-
     if NOTIFY_SLACK:
         notify_slack(endpoint, prev, new, diff, prevsize, newsize)
     if NOTIFY_EMAIL:
-        pass
-        // TODO mpla mpla
+        notify_email(endpoint, prev, new, diff, prevsize, newsize)
 
 
 def main():
