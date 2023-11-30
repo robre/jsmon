@@ -25,11 +25,11 @@ With The Contents:
 #JSMON_NOTIFY_SLACK=True
 #JSMON_SLACK_TOKEN=sometoken
 #JSMON_SLACK_CHANNEL_ID=somechannel
-#Added email support, just enable these settings
+#Added yahoo email support, just enable these settings and to define in your yahoo account a password for jsmon app
 JSMON_NOTIFY_EMAIL=True
 JSMON_EMAIL_FROM=SENDER'S EMAIL
 JSMON_EMAIL_TO=RECIPIENT'S EMAIL
-# This is yahoo's app password. You need to define in your yahoo account a password for jsmon app
+# This is yahoo's app password.
 JSMON_EMAIL_PASSWORD=SENDER'S PASSWORD
 ```
 To Enable slack, uncomment the slack lines in the env and add your token.
