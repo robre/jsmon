@@ -153,28 +153,25 @@ def notify_slack(endpoint,prev, new, diff, prevsize,newsize):
         print(f"Got an error: {e.response['error']}")
 
 def notify_email(endpoint,prev, new, diff, prevsize,newsize):
-    #try:
-    subject = "[JSmon] {} has been updated! View message body to check changes.".format(endpoint)
-    body = diff
-    sender = EMAIL_SENDER
-    recipients = [EMAIL_RECEIVER]
-    password = EMAIL_PASSWORD
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = sender
-    msg['To'] = ', '.join(recipients)
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-            
+    try:
+        subject = "[JSmon] {} has been updated! View message body to check changes.".format(endpoint)
+        body = diff
+        sender = EMAIL_SENDER
+        recipients = [EMAIL_RECEIVER]
+        password = EMAIL_PASSWORD
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = sender
+        msg['To'] = ', '.join(recipients)        
+        with smtplib.SMTP_SSL('smtp.mail.yahoo.com', 465) as smtp_server:            
             # Authentication
-        smtp_server.login(sender, password)
-            
-        smtp_server.sendmail(sender, recipients, msg.as_string())
-
+            smtp_server.login(sender, password)    
+            smtp_server.sendmail(sender, recipients, msg.as_string())
             # Termination
-            # smtp_server.quit()
-    #except smtplib.SMTPResponseException as e: 
-    print("An exception sending email.".format(e.smtp_error))
-    print("An exception sending email.".format(e.smtp_code))
+            smtp_server.quit()
+            print("An email was sent to {}".format(recipients))
+    except (Exception, e) as e: 
+        print("An exception sending email.".format(e))
 
 
 def notify(endpoint, prev, new):
@@ -194,14 +191,14 @@ def main():
 
 
     if not(NOTIFY_SLACK or NOTIFY_TELEGRAM or NOTIFY_EMAIL):
-        print("You need to setup Slack or Telegram Notifications or set up a GMail account of JSMon to work!")
+        print("You need to setup Slack or Telegram Notifications or set up a Yahoo account of JSMon to work!")
         exit(1)
     if NOTIFY_TELEGRAM and "CHANGEME" in [TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]:
         print("Please Set Up your Telegram Token And Chat ID!!!")
     if NOTIFY_SLACK and "CHANGEME" in [SLACK_TOKEN, SLACK_CHANNEL_ID]:
         print("Please Set Up your Sllack Token And Channel ID!!!")
     if NOTIFY_EMAIL and "CHANGEME" in [EMAIL_SENDER, EMAIL_RECEIVER, EMAIL_PASSWORD]:
-        print("Please Set Up your GMail account!!!")
+        print("Please Set Up your Yahoo account!!!")
         
     allendpoints = get_endpoint_list('targets')
 
