@@ -153,21 +153,28 @@ def notify_slack(endpoint,prev, new, diff, prevsize,newsize):
         print(f"Got an error: {e.response['error']}")
 
 def notify_email(endpoint,prev, new, diff, prevsize,newsize):
-    try:
-        subject = "[JSmon] {} has been updated! View message body to check changes.".format(endpoint)
-        body = diff
-        sender = EMAIL_SENDER
-        recipients = [EMAIL_RECEIVER]
-        password = EMAIL_PASSWORD
-        msg = MIMEText(body)
-        msg['Subject'] = subject
-        msg['From'] = sender
-        msg['To'] = ', '.join(recipients)
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-            smtp_server.login(sender, password)
-            smtp_server.sendmail(sender, recipients, msg.as_string())
-    except: 
-        printf("An exception sending email.")
+    #try:
+    subject = "[JSmon] {} has been updated! View message body to check changes.".format(endpoint)
+    body = diff
+    sender = EMAIL_SENDER
+    recipients = [EMAIL_RECEIVER]
+    password = EMAIL_PASSWORD
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = sender
+    msg['To'] = ', '.join(recipients)
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+            
+            # Authentication
+        smtp_server.login(sender, password)
+            
+        smtp_server.sendmail(sender, recipients, msg.as_string())
+
+            # Termination
+            # smtp_server.quit()
+    #except smtplib.SMTPResponseException as e: 
+    print("An exception sending email.".format(e.smtp_error))
+    print("An exception sending email.".format(e.smtp_code))
 
 
 def notify(endpoint, prev, new):
