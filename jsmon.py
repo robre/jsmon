@@ -159,7 +159,7 @@ def notify_email(endpoint,prev, new, diff, prevsize,newsize):
         sender = EMAIL_SENDER
         recipients = [EMAIL_RECEIVER]
         password = EMAIL_PASSWORD
-        msg = MIMEText(body)
+        msg = MIMEText(body, "html")
         msg['Subject'] = subject
         msg['From'] = sender
         msg['To'] = ', '.join(recipients)        
