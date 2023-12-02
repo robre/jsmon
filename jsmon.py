@@ -7,15 +7,22 @@ import hashlib
 import json
 import difflib
 import jsbeautifier
+import smtplib
 
 from decouple import config
+from email.mime.text import MIMEText
 
 TELEGRAM_TOKEN = config("JSMON_TELEGRAM_TOKEN", default="CHANGEME")
 TELEGRAM_CHAT_ID = config("JSMON_TELEGRAM_CHAT_ID", default="CHANGEME")
 SLACK_TOKEN = config("JSMON_SLACK_TOKEN", default="CHANGEME")
 SLACK_CHANNEL_ID = config("JSMON_SLACK_CHANNEL_ID", default="CHANGEME")
+EMAIL_SENDER = config("JSMON_EMAIL_FROM", default="CHANGEME")
+EMAIL_RECEIVER = config("JSMON_EMAIL_TO", default="CHANGEME")
+EMAIL_PASSWORD =  config("JSMON_EMAIL_PASSWORD", default="CHANGEME")
 NOTIFY_SLACK = config("JSMON_NOTIFY_SLACK", default=False, cast=bool)
 NOTIFY_TELEGRAM = config("JSMON_NOTIFY_TELEGRAM", default=False, cast=bool)
+NOTIFY_EMAIL = config("JSMON_NOTIFY_EMAIL", default=True, cast=bool)
+
 if NOTIFY_SLACK:
     from slack import WebClient
     from slack.errors import SlackApiError
@@ -145,28 +152,53 @@ def notify_slack(endpoint,prev, new, diff, prevsize,newsize):
         assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
         print(f"Got an error: {e.response['error']}")
 
+def notify_email(endpoint,prev, new, diff, prevsize,newsize):
+    try:
+        subject = "[JSmon] {} has been updated! View message body to check changes.".format(endpoint)
+        body = diff
+        sender = EMAIL_SENDER
+        recipients = [EMAIL_RECEIVER]
+        password = EMAIL_PASSWORD
+        msg = MIMEText(body, "html")
+        msg['Subject'] = subject
+        msg['From'] = sender
+        msg['To'] = ', '.join(recipients)        
+        with smtplib.SMTP_SSL('smtp.mail.yahoo.com', 465) as smtp_server:            
+            # Authentication
+            smtp_server.login(sender, password)    
+            smtp_server.sendmail(sender, recipients, msg.as_string())
+            # Termination
+            smtp_server.quit()
+            print("An email was sent to {}".format(recipients))
+    except (Exception, e) as e: 
+        print("An exception sending email.".format(e))
+
+
 def notify(endpoint, prev, new):
     diff = get_diff(prev,new)
     prevsize = get_file_stats(prev).st_size
     newsize = get_file_stats(new).st_size
     if NOTIFY_TELEGRAM:
         notify_telegram(endpoint, prev, new, diff, prevsize, newsize)
-
     if NOTIFY_SLACK:
         notify_slack(endpoint, prev, new, diff, prevsize, newsize)
+    if NOTIFY_EMAIL:
+        notify_email(endpoint, prev, new, diff, prevsize, newsize)
 
 
 def main():
     print("JSMon - Web File Monitor")
 
 
-    if not(NOTIFY_SLACK or NOTIFY_TELEGRAM):
-        print("You need to setup Slack or Telegram Notifications of JSMon to work!")
+    if not(NOTIFY_SLACK or NOTIFY_TELEGRAM or NOTIFY_EMAIL):
+        print("You need to setup Slack or Telegram Notifications or set up a Yahoo account of JSMon to work!")
         exit(1)
     if NOTIFY_TELEGRAM and "CHANGEME" in [TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]:
         print("Please Set Up your Telegram Token And Chat ID!!!")
     if NOTIFY_SLACK and "CHANGEME" in [SLACK_TOKEN, SLACK_CHANNEL_ID]:
         print("Please Set Up your Sllack Token And Channel ID!!!")
+    if NOTIFY_EMAIL and "CHANGEME" in [EMAIL_SENDER, EMAIL_RECEIVER, EMAIL_PASSWORD]:
+        print("Please Set Up your Yahoo account!!!")
         
     allendpoints = get_endpoint_list('targets')
 
