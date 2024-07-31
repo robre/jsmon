@@ -24,9 +24,9 @@ JSMON_TELEGRAM_TOKEN=YOUR TELEGRAM TOKEN
 JSMON_TELEGRAM_CHAT_ID=YOUR TELEGRAM CHAT ID
 #JSMON_NOTIFY_SLACK=True
 #JSMON_SLACK_TOKEN=sometoken
-#JSMON_SLACK_CHANNEL_ID=somechannel
+#JSMON_SLACK_CHANNEL_ID=somechannel_ID
 ```
-To Enable slack, uncomment the slack lines in the env and add your token.
+To Enable slack, uncomment the slack lines in the env and add your token (`JSMON_SLACK_CHANNEL_ID` should be in the form of: C04P1XXXXXX).
 
 To create a cron script to run JSMon regularly:
 ```

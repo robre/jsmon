@@ -17,8 +17,8 @@ SLACK_CHANNEL_ID = config("JSMON_SLACK_CHANNEL_ID", default="CHANGEME")
 NOTIFY_SLACK = config("JSMON_NOTIFY_SLACK", default=False, cast=bool)
 NOTIFY_TELEGRAM = config("JSMON_NOTIFY_TELEGRAM", default=False, cast=bool)
 if NOTIFY_SLACK:
-    from slack import WebClient
-    from slack.errors import SlackApiError
+    from slack_sdk import WebClient
+    from slack_sdk.errors import SlackApiError
     if(SLACK_TOKEN == "CHANGEME"):
         print("ERROR SLACK TOKEN NOT FOUND!")
         exit(1)
@@ -130,7 +130,7 @@ def notify_telegram(endpoint,prev, new, diff, prevsize,newsize):
 
 def notify_slack(endpoint,prev, new, diff, prevsize,newsize):
     try:
-        response = client.files_upload(
+        response = client.files_upload_v2(
             initial_comment = "[JSmon] {} has been updated! Download below diff HTML file to check changes.".format(endpoint),
             channels = SLACK_CHANNEL_ID,
             content = diff,

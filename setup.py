@@ -11,5 +11,5 @@ setup(
     author_email='mail@r0b.re',
     license='MIT',
     url='https://github.com/robre/jsmon',
-    install_requires=['requests', 'jsbeautifier', 'python-decouple','slackclient'],
+    install_requires=['requests', 'jsbeautifier', 'python-decouple','slack_sdk'],
 )
